@@ -2,15 +2,16 @@
 
 ## Vision
 
-A terminal-native Game of Life framework that turns Conway's cellular automaton into a living, breathing entropy visualizer. Feed it GPU VRAM noise, microphone input, network traffic, AI-generated patterns, or any stream of chaos — and watch order emerge from disorder in real time. Inspired by `conway-screensaver` but built for people who want their terminal to feel alive.
+A terminal-native cellular automata framework built on N-dimensional set theory. The engine models automata in arbitrary-dimensional spaces — 2D Conway's Game of Life is just the default projection. Feed it GPU VRAM noise, microphone input, network traffic, AI-generated patterns, or any stream of chaos — and watch order emerge from disorder in real time. Inspired by `conway-screensaver` and the ideas in "Cellular Automata: Cyber Creepy Crawlies" (Nelson & Looper, ISEF 2000, AAAI Award), which mapped traditional AI concepts back to automata using multi-dimensional set theory. Golf carries that work forward with modern Rust, real-time entropy sources, and LLM integration as the bridge between classical AI↔automata correspondence and contemporary generative AI.
 
 ## Goals
 
-- Render Conway's Game of Life at 60+ FPS with smooth, beautiful terminal output
+- Model cellular automata in N-dimensional spaces with set-theoretic rule definitions — 2D is the default, not the limit
+- Render projections of N-dimensional state to the terminal at 60+ FPS with beautiful output
 - Support pluggable entropy sources that seed and perturb simulations in real time
 - Read raw GPU VRAM via CUDA as a first-class entropy source
 - Capture audio input (microphone, system audio) and map waveforms/FFT to cell patterns
-- Integrate with LLMs to generate patterns from text, mutate rulesets, and narrate emergent behavior
+- Bridge classical AI↔automata correspondence with modern LLMs — pattern generation, rule evolution, behavior narration
 - Support classic Game of Life file formats (RLE, Life 1.06, plaintext) for pattern loading
 - Provide a subcommand-based CLI with discoverable, composable options
 - Make it mesmerizing — color gradients, cell age heatmaps, trail effects, smooth transitions
@@ -20,7 +21,7 @@ A terminal-native Game of Life framework that turns Conway's cellular automaton 
 - GUI or web interface — this is terminal-only
 - Multiplayer or networked simulation sync
 - Hand-editing patterns in a visual editor (load from files instead)
-- Scientific accuracy or research-grade simulation (we optimize for aesthetics)
+- Scientific accuracy or research-grade simulation (we optimize for aesthetics over formal proofs)
 - Cross-platform GPU support in v1 (CUDA first, Vulkan later)
 - Windows support (Linux-first, macOS where it works)
 
@@ -31,15 +32,19 @@ Single Rust binary (`golf`) with subcommands. Workspace layout:
 ```
 golf/
   crates/
-    golf-core/        # Grid engine, rules, cell types, simulation loop
-    golf-render/      # Terminal rendering (ratatui), color schemes, effects
+    golf-core/        # N-dimensional grid engine, set-theoretic rules, simulation loop
+    golf-render/      # Terminal rendering (ratatui), N→2D projection, color schemes, effects
     golf-entropy/     # Entropy source trait + implementations (CUDA, audio, network, etc.)
-    golf-ai/          # LLM integration (pattern gen, rule mutation, narration)
+    golf-ai/          # LLM↔automata bridge (pattern gen, rule evolution, narration)
     golf-formats/     # File format parsers (RLE, Life 1.06, plaintext)
     golf-cli/         # Clap CLI, subcommands, config
 ```
 
-The core loop: entropy sources produce `EntropyEvent`s (cell injections, rule mutations, energy pulses). The simulation engine consumes events, steps the grid, and the renderer paints each frame. Sources run on background threads/tasks and push events through channels.
+**Core abstraction:** The grid is an N-dimensional space where cells are elements of a set. Neighborhoods are defined as set operations (Moore, von Neumann, or custom N-dimensional neighborhoods). Rules are predicates over neighborhood cardinality — B3/S23 is just `birth: {3}, survival: {2, 3}` in the 2D Moore case. This generalizes cleanly to higher dimensions.
+
+**Core loop:** Entropy sources produce `EntropyEvent`s (cell injections, rule mutations, energy pulses, dimensional shifts). The simulation engine consumes events, steps the grid, and the renderer projects the state to 2D and paints each frame. Sources run on background tasks and push events through channels.
+
+**Dimensional projection:** Higher-dimensional simulations are projected to 2D for terminal display — slicing (show a 2D cross-section), flattening (overlay multiple layers with alpha blending), or rotation (animate through dimensional axes).
 
 **Key crate choices:**
 - `ratatui` + `crossterm` — terminal rendering
@@ -51,16 +56,17 @@ The core loop: entropy sources produce `EntropyEvent`s (cell injections, rule mu
 
 ## Feature Areas
 
-- **Core Engine** — Grid data structure, B3/S23 rules, step function, toroidal/bounded edges, configurable grid size (SPEC-001)
-- **Rendering** — ratatui-based renderer, cell age coloring, heatmaps, trail/fade effects, FPS counter, multiple color schemes (SPEC-002)
+- **Core Engine** — N-dimensional grid, set-theoretic rule system, step function, toroidal/bounded edges, cell age tracking (SPEC-001)
+- **Rendering** — ratatui-based renderer, N→2D projection, cell age coloring, heatmaps, trail/fade effects, FPS counter, color schemes (SPEC-002)
 - **Entropy Trait** — Pluggable `EntropySource` trait, `EntropyEvent` types, real-time event channel, source registry (SPEC-003)
 - **Classic Sources** — Random init, file pattern loading (RLE, Life 1.06, plaintext), procedural generators (noise, fractals, glider guns) (SPEC-004)
 - **GPU Entropy** — CUDA VRAM reads, memory region selection, bit-to-cell mapping, entropy density control (SPEC-005)
 - **Audio Entropy** — Microphone/system audio capture, FFT spectral analysis, waveform-to-grid mapping, beat detection → cell pulses (SPEC-006)
 - **Network Entropy** — Packet capture or socket data as entropy, DNS query visualization, ping latency mapping (SPEC-007)
-- **AI Integration** — LLM pattern generation from text prompts, rule mutation suggestions, emergent behavior narration, interactive chat overlay (SPEC-008)
-- **Visual Effects** — Smooth transitions between states, particle trails, glow effects, zoom/pan, split-screen multi-sim (SPEC-009)
+- **AI Integration** — LLM↔automata bridge: pattern generation, rule evolution, behavior narration, classical AI correspondence (SPEC-008)
+- **Visual Effects** — Smooth transitions, particle trails, glow effects, zoom/pan, split-screen, dimensional projection controls (SPEC-009)
 - **CLI & Config** — Subcommands (`golf run`, `golf list-sources`, `golf demo`), TOML config, preset management, `--source` stacking (SPEC-010)
+- **MCP Interface** — MCP server exposing simulation control, entropy injection, rule mutation, and state queries as tools for LLM agents and editors (SPEC-011)
 
 ## Constraints
 
@@ -76,13 +82,28 @@ The core loop: entropy sources produce `EntropyEvent`s (cell injections, rule mu
 
 | Spec | Feature Area | Status | Summary |
 |------|-------------|--------|---------|
-| SPEC-001 | Core Engine | draft | Grid engine, rules, simulation step |
-| SPEC-002 | Rendering | draft | Terminal rendering, color, effects |
-| SPEC-003 | Entropy Trait | draft | Pluggable entropy source abstraction |
-| SPEC-004 | Classic Sources | draft | Random, file patterns, procedural generators |
-| SPEC-005 | GPU Entropy | draft | CUDA VRAM entropy source |
-| SPEC-006 | Audio Entropy | draft | Microphone/audio FFT entropy source |
-| SPEC-007 | Network Entropy | draft | Network traffic entropy source |
-| SPEC-008 | AI Integration | draft | LLM pattern generation and narration |
-| SPEC-009 | Visual Effects | draft | Transitions, trails, glow, split-screen |
-| SPEC-010 | CLI & Config | draft | Subcommands, TOML config, presets |
+| SPEC-001 | Core Engine | approved | N-dimensional grid engine, set-theoretic rules |
+| SPEC-002 | Rendering | approved | Terminal rendering, N→2D projection, color, effects |
+| SPEC-003 | Entropy Trait | approved | Pluggable entropy source abstraction |
+| SPEC-004 | Classic Sources | approved | Random, file patterns, procedural generators |
+| SPEC-005 | GPU Entropy | approved | CUDA VRAM entropy source |
+| SPEC-006 | Audio Entropy | approved | Microphone/audio FFT entropy source |
+| SPEC-007 | Network Entropy | approved | Network traffic entropy source |
+| SPEC-008 | AI Integration | approved | LLM↔automata bridge, pattern gen, rule evolution |
+| SPEC-009 | Visual Effects | approved | Transitions, trails, glow, split-screen |
+| SPEC-010 | CLI & Config | approved | Subcommands, TOML config, presets |
+| SPEC-011 | MCP Interface | approved | MCP server for programmatic simulation control |
+
+## Repository
+
+| Field | Value |
+|-------|-------|
+| URL | https://github.com/iannelsondev/golf |
+| Provider | github |
+| Default Branch | main |
+| Issue Tracker | github |
+| PR/MR Strategy | squash-merge |
+| Branch Naming | spec/{spec-id}/{short-title} |
+| CI Required | false |
+| Auto-merge | false |
+| Labels | spec, auto-generated |

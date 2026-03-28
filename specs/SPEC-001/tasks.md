@@ -1,0 +1,28 @@
+# SPEC-001: Core Engine — Tasks
+
+## Tasks
+
+- [ ] T-1: Scaffold `golf-core` crate with `Cargo.toml`, `lib.rs`, and module structure (`grid`, `cell`, `rules`, `neighbors`, `edge`, `engine`, `event`, `preset`) (FR-1)
+- [ ] T-2: Implement `Cell` type alias (`u16`) and document age semantics (0=dead, >0=age) (FR-5)
+- [ ] T-3: Implement `EdgeBehavior` enum (`Toroidal`, `Bounded`) with coordinate wrapping logic (FR-4)
+- [ ] T-4: Implement `NdGrid<const N: usize>` — constructor, stride computation, flat indexing, `get()`, `set_back()`, `swap()`, `cells()`, `extents()` (FR-1)
+- [ ] T-5: Write unit tests for `NdGrid` — construction, indexing round-trip for 1D/2D/3D, swap correctness, zero-extent rejection (FR-1)
+- [ ] T-6: Implement `NeighborhoodKind` enum and `neighbor_offsets<N>()` generator for Moore (`3^N - 1`) and Von Neumann (`2N`) (FR-2, FR-3)
+- [ ] T-7: Write unit tests for neighbor offset generation — verify counts (8 for 2D Moore, 4 for 2D VN, 26 for 3D Moore, 6 for 3D VN), verify no origin offset included (FR-3)
+- [ ] T-8: Implement `count_neighbors<N>()` with edge behavior — toroidal wrapping and bounded skip (FR-3, FR-4)
+- [ ] T-9: Write unit tests for neighbor counting — toroidal wrap-around, bounded border cells, interior cells (FR-3, FR-4)
+- [ ] T-10: Implement `RuleSet` struct with `BTreeSet<u32>` birth/survival sets and `NeighborhoodKind` (FR-2)
+- [ ] T-11: Implement `Preset` enum and `RuleSet::from_preset()` for Conway, HighLife, DayNight, ThreeDLife, Custom (FR-7)
+- [ ] T-12: Implement `EntropyEvent<N>` enum — `SetCells`, `ClearRegion`, `MutateRules` variants (FR-6)
+- [ ] T-13: Implement `SimulationEngine<N>` — constructor (precompute offsets), `inject_events()`, `step()`, `grid()`, `generation()`, `rules()`, `set_rules()` (FR-1, FR-2, FR-3, FR-4, FR-5, FR-6)
+- [ ] T-14: Implement age tracking in `step()` — newborns get age 1, survivors increment with `saturating_add`, dead cells reset to 0 (FR-5)
+- [ ] T-15: Write integration test: 2D glider translates one cell diagonally after 4 steps with B3/S23 (AC-1)
+- [ ] T-16: Write integration test: 2D toroidal glider wraps at grid edge (AC-2)
+- [ ] T-17: Write integration test: 3D Moore neighbor count is 26 for an interior cell (AC-3)
+- [ ] T-18: Write integration test: cell age increments on survival, newborns start at 1 (AC-4)
+- [ ] T-19: Write integration test: `EntropyEvent::SetCells` applies to grid before next step (AC-5)
+- [ ] T-20: Write integration test: HighLife replicator with `RuleSet { birth: {3,6}, survival: {2,3} }` replicates correctly (AC-6)
+- [ ] T-21: Write performance benchmark: 200x50 2D grid, 1000 steps, assert average under 1ms (AC-7, NFR-1)
+- [ ] T-22: Write performance benchmark: 50x50x50 3D grid, 100 steps, assert average under 50ms (NFR-3)
+- [ ] T-23: Add `#[instrument]` tracing spans to `step()`, `inject_events()`, and `new()` at appropriate levels (NFR cross-cutting)
+- [ ] T-24: Add public re-exports in `lib.rs` and verify `cargo clippy -- -D warnings` and `cargo fmt --check` pass with zero issues (FR-1)
